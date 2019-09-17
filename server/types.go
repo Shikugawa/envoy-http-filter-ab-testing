@@ -3,7 +3,7 @@ package server
 import (
 	"database/sql"
 
-	"github.com/gomodule/redigo/redis"
+	"github.com/go-redis/redis"
 )
 
 type Credentials struct {
@@ -15,5 +15,9 @@ type WelcomeResponse struct {
 	Color string `json:color`
 }
 
+type WelcomeRequest struct {
+	SessionId string `json:session_id`
+}
+
 var DBConnectopn *sql.DB
-var RedisConnectopn redis.Conn
+var RedisClient redis.Client
