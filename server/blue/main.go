@@ -13,12 +13,20 @@ import (
 
 func welcomeHandler(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Access-Control-Allow-Origin", "*")
+	w.Header().Set("Content-Type", "application/json")
+	var resp *server.WelcomeResponse
+
+	if r.Method != http.MethodPost {
+		w.WriteHeader(http.StatusBadRequest)
+		return
+	}
+
 	var welcome_req server.WelcomeRequest
 	if err := json.NewDecoder(r.Body).Decode(&welcome_req); err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
-	var resp *server.WelcomeResponse
+
 	if len(welcome_req.SessionId) != 0 {
 		if err := server.RedisClient.Get(welcome_req.SessionId).Err(); err != nil {
 			w.WriteHeader(http.StatusBadRequest)
@@ -32,6 +40,7 @@ func welcomeHandler(w http.ResponseWriter, r *http.Request) {
 			Color: "none",
 		}
 	}
+
 	byte_resp, _ := json.Marshal(resp)
 	w.Write(byte_resp)
 }
