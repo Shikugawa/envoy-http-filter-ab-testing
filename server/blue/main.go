@@ -54,7 +54,7 @@ func main() {
 		panic(err)
 	}
 	server.RedisClient = *client
-	db, err := sql.Open("mysql", server.MySQLUserName+"@tcp("+server.MySQLHost+":"+server.MySQLPort+")/"+server.MySQLDBName)
+	db, err := sql.Open("mysql", server.MySQLUserName+":"+server.MySQLPassWord+"@tcp("+server.MySQLHost+":"+server.MySQLPort+")/"+server.MySQLDBName)
 	defer db.Close()
 	if err != nil {
 		panic(err)
@@ -62,5 +62,7 @@ func main() {
 	server.DBConnectopn = db
 	http.HandleFunc("/welcome", welcomeHandler)
 	http.HandleFunc("/login", server.LoginHandler)
-	log.Fatal(http.ListenAndServe(":8080", nil))
+	log.Println("Start Server...")
+	log.Fatal(http.ListenAndServe("0.0.0.0:5000", nil))
+	log.Println("Finished...")
 }

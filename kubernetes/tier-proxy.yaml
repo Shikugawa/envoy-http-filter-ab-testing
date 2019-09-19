@@ -1,0 +1,51 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: envoy-api-proxy
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: envoy-api-proxy
+  template:
+    metadata:
+      labels:
+        app: envoy-api-proxy
+    spec:
+      containers:
+        - name: envoy-api-envoy
+          image: envoyproxy/envoy:latest
+          command:
+            - /usr/local/bin/envoy
+          args:
+            - --config-path /etc/envoy/envoy.yaml
+          resources:
+            limits:
+              memory: 128Mi
+              cpu: 500m
+          volumeMounts:
+            - name: envoy-config
+              mountPath: /etc/envoy
+          ports:
+            - containerPort: 8000
+              name: listener
+            - containerPort: 8001
+              name: admin
+      volumes:
+        - name: envoy-config
+          configMap: 
+            name: envoy-api-proxy-config
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: envoy-api-port-binding
+spec:
+  selector:
+    app: envoy-api-proxy
+  type: NodePort
+  ports:
+    - port: 3000
+      targetPort: 8000
+      nodePort: 30101 # KindのExtraportmappingに合わせる必要がある
+      

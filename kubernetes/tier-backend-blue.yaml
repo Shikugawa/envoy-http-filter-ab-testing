@@ -1,0 +1,36 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: envoy-api-blue
+spec:
+  selector:
+    matchLabels:
+      app: envoy-api-blue
+  template:
+    metadata:
+      labels:
+        app: envoy-api-blue
+    spec:
+      containers:
+        - name: envoy-api-blue-image
+          image: ayamaruyama/envoy-test-blue:latest
+          imagePullPolicy: Always
+          resources:
+            limits:
+              memory: 512Mi
+              cpu: 500m
+          ports:
+            - containerPort: 5000
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: envoy-api-blue-service
+spec:
+  clusterIP: None
+  selector:
+    app: envoy-api-blue
+  ports:
+    - name: headless
+      port: 80
+      protocol: TCP

@@ -1,10 +1,11 @@
 package server
 
 const (
-	RedisHost     = "127.0.0.1"
+	RedisHost     = "envoy-api-redis-service"
 	RedisPort     = "6379"
-	MySQLHost     = "127.0.0.1"
+	MySQLHost     = "envoy-api-mysql-service"
 	MySQLPort     = "3306"
 	MySQLUserName = "root"
+	MySQLPassWord = "password"
 	MySQLDBName   = "EnvoyABTesting"
 )

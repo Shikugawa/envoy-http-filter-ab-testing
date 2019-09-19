@@ -1,0 +1,77 @@
+apiVersion: apps/v1 # for versions before 1.9.0 use apps/v1beta2
+kind: Deployment
+metadata:
+  name: envoy-api-mysql
+spec:
+  selector:
+    matchLabels:
+      app: envoy-api-mysql
+  strategy:
+    type: Recreate
+  template:
+    metadata:
+      labels:
+        app: envoy-api-mysql
+    spec:
+      containers:
+        - name: mysql
+          image: mysql:5.6
+          env:
+            - name: MYSQL_ROOT_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: envoy-api-mysql-secret
+                  key: mysql_root_password
+          ports:
+            - containerPort: 3306
+          volumeMounts:
+            - name: envoy-api-mysql-persistent-storage
+              mountPath: /var/lib/mysql
+      volumes:
+        - name: envoy-api-mysql-persistent-storage
+          persistentVolumeClaim:
+            claimName: envoy-api-mysql-pv-claim
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: envoy-api-mysql-service
+spec:
+  clusterIP: None
+  selector:
+    app: envoy-api-mysql
+  ports:
+    - port: 3306
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: envoy-api-mysql-secret
+type: Opaque
+data:
+  mysql_root_password: cGFzc3dvcmQ=
+---
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: envoy-api-mysql-pv-volume
+spec:
+  storageClassName: manual
+  capacity:
+    storage: 2Gi
+  accessModes:
+    - ReadWriteOnce
+  hostPath:
+    path: "/mnt/data"
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: envoy-api-mysql-pv-claim
+spec:
+  storageClassName: manual
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 2Gi

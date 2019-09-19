@@ -1,0 +1,33 @@
+apiVersion: extensions/v1beta1
+kind: Deployment
+metadata:
+  name: envoy-api-redis
+spec:
+  selector:
+    matchLabels:
+      app: envoy-api-redis
+  template:
+    metadata:
+      labels:
+        app: envoy-api-redis
+    spec:
+      containers:
+        - name: redis
+          image: redis:latest
+          resources:
+            limits:
+              memory: 128Mi
+              cpu: 500m
+          ports:
+            - containerPort: 6379
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: envoy-api-redis-service
+spec:
+  clusterIP: None
+  selector:
+    app: envoy-api-redis
+  ports:
+    - port: 6379
