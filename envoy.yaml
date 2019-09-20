@@ -1,0 +1,83 @@
+static_resources:
+  listeners:
+    - address:
+        socket_address:
+          address: 0.0.0.0
+          port_value: 8000
+      filter_chains:
+        - filters:
+            - name: envoy.http_connection_manager
+              config:
+                stat_prefix: ingress_http
+                access_log:
+                  - name: envoy.file_access_log
+                    config:
+                      path: /dev/stdout
+                route_config:
+                  name: local_route
+                  virtual_hosts:
+                    - name: backend_service
+                      domains:
+                        - "*"
+                      routes:
+                        - match:
+                            prefix: "/blue/*"
+                          route:
+                            cluster: envoy-api-blue-service
+                        - match:
+                            prefix: "/green/*"
+                          route:
+                            cluster: envoy-api-green-service
+                http_filters:
+                  - name: envoy.lua
+                    typed_config:
+                      "@type": type.googleapis.com/envoy.config.filter.http.lua.v2.Lua
+                      inline_code: |
+                        function envoy_on_request(request_handle)
+                          local mod = request_handle:headers():get("x-user-id-mod")
+                          local current_post = request_handle:headers():get(":path")
+                          if mod == 0 then
+                            local replaced_post = "/green" .. current_post
+                            request_handle:headers():replace(":path", replaced_post)
+                          else
+                            local replaced_post = "/blue" .. current_post
+                            request_handle:headers():replace(":path", replaced_post) 
+                          end
+                        end
+
+                        function envoy_on_response(response_handle)
+                          response_handle:headers():add("x-envoy-custom-header", 3333333333)
+                        end
+                  - name: envoy.router
+                    typed_config: {}
+  clusters:
+    - name: envoy-api-blue-service
+      connect_timeout: 0.250s
+      type: static
+      load_assignment:
+        cluster_name: envoy-api-blue-service
+        endpoints:
+          lb_endpoints:
+            - endpoint:
+                address:
+                  socket_address:
+                    address: 127.0.0.1
+                    port_value: 5000
+    - name: envoy-api-green-service
+      connect_timeout: 0.250s
+      type: static
+      load_assignment:
+        cluster_name: envoy-api-green-service
+        endpoints:
+          lb_endpoints:
+            - endpoint:
+                address:
+                  socket_address:
+                    address: 127.0.0.1
+                    port_value: 4000
+admin:
+  access_log_path: "/dev/stdout"
+  address:
+    socket_address:
+      address: 0.0.0.0
+      port_value: 8001

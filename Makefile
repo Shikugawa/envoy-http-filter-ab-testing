@@ -28,3 +28,9 @@ apply-all:
 	kubectl apply -f ./kubernetes/tier-mysql.yaml
 	kubectl apply -f ./kubernetes/tier-redis.yaml	
 	kubectl apply -f ./kubernetes/tier-backend.yaml
+
+build:
+	make build-blue
+	make build-green
+	make build-blue-image
+	make build-green-image

@@ -60,7 +60,7 @@ func main() {
 		panic(err)
 	}
 	server.DBConnectopn = db
-	http.HandleFunc("/welcome", welcomeHandler)
+	http.HandleFunc("/blue/welcome", welcomeHandler)
 	http.HandleFunc("/login", server.LoginHandler)
 	log.Println("Start Server...")
 	log.Fatal(http.ListenAndServe("0.0.0.0:5000", nil))

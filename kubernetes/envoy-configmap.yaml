@@ -29,10 +29,41 @@ data:
                             - "*"
                           routes:
                             - match:
-                                prefix: "/"
+                                prefix: "/blue/welcome"
+                              route:
+                                cluster: envoy-api-blue-service
+                            - match:
+                                prefix: "/green/welcome"
+                              route:
+                                cluster: envoy-api-green-service
+                            - match:
+                                prefix: "/login"
                               route:
                                 cluster: envoy-api-blue-service
                     http_filters:
+                      - name: envoy.lua
+                        typed_config:
+                          "@type": type.googleapis.com/envoy.config.filter.http.lua.v2.Lua
+                          inline_code: |
+                            function envoy_on_request(request_handle)
+                              local percentage = 0.4
+                              local div = 10
+                              local path = request_handle:headers():get(":path")
+
+                              if path == "/welcome" then
+                                local mod = request_handle:headers():get("x-user-id") % div
+                                
+                                if mod >= 0 and mod < div*percentage then
+                                  request_handle:headers():replace(":path", "/blue/welcome")
+                                else
+                                  request_handle:headers():replace(":path", "/green/welcome")
+                                end
+                              end
+                            end
+
+                            function envoy_on_response(response_handle)
+                              response_handle:headers():add("x-envoy-custom-header", 3333333333)
+                            end
                       - name: envoy.router
                         typed_config: {}
       clusters:
@@ -48,6 +79,18 @@ data:
                       socket_address:
                         address: 127.0.0.1
                         port_value: 5000
+        - name: envoy-api-green-service
+          connect_timeout: 0.250s
+          type: static
+          load_assignment:
+            cluster_name: envoy-api-green-service
+            endpoints:
+              lb_endpoints:
+                - endpoint:
+                    address:
+                      socket_address:
+                        address: 127.0.0.1
+                        port_value: 4000
     admin:
       access_log_path: "/dev/stdout"
       address:
